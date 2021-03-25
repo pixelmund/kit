@@ -1,4 +1,4 @@
-import { Headers, LoadInput, LoadOutput, Logger } from './types.internal';
+import { Headers, LoadInput, LoadOutput, Logger, SKResponse } from './types.internal';
 
 export type Config = {
 	compilerOptions?: any;
@@ -61,15 +61,24 @@ export interface RequestHandlerResponse {
 	body?: any;
 }
 
+export type Request<Con = any> = {
+	host: string;
+	headers: Headers;
+	path: string;
+	params: Record<string, string>;
+	query: URLSearchParams;
+	body: string | Buffer | ReadOnlyFormData;
+	context: Con;
+};
+
+export type SetupHandler<Con = any> = (props: {
+	request: Request<Con>;
+	render: (request: Request<Con>) => Promise<Omit<SKResponse, 'dependencies'>>;
+	isPage: boolean;
+}) => Omit<SKResponse, 'dependencies'> | Promise<Omit<SKResponse, 'dependencies'>>;
+
 export type RequestHandler = (
-	request?: {
-		host: string;
-		headers: Headers;
-		path: string;
-		params: Record<string, string>;
-		query: URLSearchParams;
-		body: string | Buffer | ReadOnlyFormData;
-	},
+	request?: Request,
 	context?: any
 ) => RequestHandlerResponse | Promise<RequestHandlerResponse>;
 

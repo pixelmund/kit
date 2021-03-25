@@ -1,4 +1,4 @@
-import { Adapter, Load } from './types';
+import { Adapter, Load, SetupHandler } from './types';
 
 declare global {
 	interface ImportMeta {
@@ -73,6 +73,7 @@ export type Request = {
 	path: string;
 	body: any;
 	query: URLSearchParams;
+	context: any;
 };
 
 export type SKResponse = {
@@ -185,6 +186,7 @@ export type SSRRenderOptions = {
 			headers?: Headers;
 		};
 		getSession?: ({ context }: { context: any }) => any;
+		handle?: SetupHandler;
 	};
 	dev?: boolean;
 	amp?: boolean;

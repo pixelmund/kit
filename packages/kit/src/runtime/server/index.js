@@ -23,16 +23,35 @@ export async function ssr(request, options) {
 		};
 	}
 
-	const { context, headers = {} } =
+	let headers = {};
+	const { context = {} } =
 		(await (options.setup.prepare && options.setup.prepare({ headers: request.headers }))) || {};
+
+	request.context = context;
 
 	try {
 		for (const route of options.manifest.routes) {
 			if (route.pattern.test(request.path)) {
-				const response =
-					route.type === 'endpoint'
+				/**
+				 * @param {any} request
+				 */
+				const render = async (request) => {
+					return route.type === 'endpoint'
 						? await render_endpoint(request, route, context, options)
 						: await render_page(request, route, context, options);
+				};
+
+				/** @type {import('../../../types.internal').SKResponse} */
+				let response;
+
+				if (options.setup.handle) {
+					//@ts-ignore
+					response = await options.setup.handle({ request, render, isPage: route.type === 'page' });
+				} else {
+					response = await render(request);
+				}
+
+				headers = response.headers;
 
 				if (response) {
 					// inject ETags for 200 responses
@@ -56,7 +75,7 @@ export async function ssr(request, options) {
 						status: response.status,
 						// TODO header merging is more involved than this — see the 'message.headers'
 						// section of https://nodejs.org/api/http.html#http_class_http_incomingmessage
-						headers: { ...headers, ...response.headers },
+						headers: response.headers,
 						body: response.body,
 						dependencies: response.dependencies
 					};
